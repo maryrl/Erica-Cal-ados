@@ -1,5 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '../../context/StoreContext';
+import { parseVideoSource } from '../../lib/mediaStorage';
 import {
   FileText,
   Image as ImageIcon,
@@ -36,6 +37,19 @@ export const ContentManagement: React.FC = () => {
   const [announcementBarText, setAnnouncementBarText] = useState(siteContent.announcementBarText);
   const [aboutHistory, setAboutHistory] = useState(siteContent.aboutHistory);
 
+  // Sync form state when siteContent updates (e.g. from IndexedDB hydration or remote state)
+  useEffect(() => {
+    setHeroTitle(siteContent.heroTitle);
+    setHeroSubtitle(siteContent.heroSubtitle);
+    setHeroButtonText(siteContent.heroButtonText);
+    setHeroImage(siteContent.heroImage);
+    setHeroVideoUrl(siteContent.heroVideoUrl || '');
+    setHeroMediaType(siteContent.heroMediaType || 'both');
+    setHeroVideoTitle(siteContent.heroVideoTitle || 'Assistir Vídeo da Coleção');
+    setAnnouncementBarText(siteContent.announcementBarText);
+    setAboutHistory(siteContent.aboutHistory);
+  }, [siteContent]);
+
   const imageInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
 
@@ -70,7 +84,10 @@ export const ContentManagement: React.FC = () => {
       reader.onloadend = () => {
         if (typeof reader.result === 'string') {
           setHeroVideoUrl(reader.result);
-          showToast('Vídeo enviado com sucesso!', 'success');
+          if (heroMediaType === 'image') {
+            setHeroMediaType('video');
+          }
+          showToast('Vídeo enviado com sucesso! Clique em Salvar para aplicar.', 'success');
         }
       };
       reader.readAsDataURL(file);
@@ -323,33 +340,38 @@ export const ContentManagement: React.FC = () => {
               </div>
 
               {/* Video Live Preview Player */}
-              {heroVideoUrl && (
-                <div className="mt-2 p-3 rounded-xl bg-black/90 text-white space-y-2">
-                  <div className="flex items-center justify-between text-[11px] text-[#DFBA61] font-bold">
-                    <span className="flex items-center gap-1">
-                      <Play className="w-3.5 h-3.5 fill-current" />
-                      <span>Preview do Vídeo Selecionado</span>
-                    </span>
-                    <span className="text-[10px] text-zinc-400">Pronto para a Home</span>
+              {heroVideoUrl && (() => {
+                const parsed = parseVideoSource(heroVideoUrl);
+                return (
+                  <div className="mt-2 p-3 rounded-xl bg-black/90 text-white space-y-2">
+                    <div className="flex items-center justify-between text-[11px] text-[#DFBA61] font-bold">
+                      <span className="flex items-center gap-1">
+                        <Play className="w-3.5 h-3.5 fill-current" />
+                        <span>Preview do Vídeo Selecionado</span>
+                      </span>
+                      <span className="text-[10px] text-zinc-400">Pronto para a Home</span>
+                    </div>
+                    <div className="aspect-video w-full rounded-lg overflow-hidden bg-black border border-zinc-800">
+                      {parsed.type === 'youtube' || parsed.type === 'vimeo' ? (
+                        <iframe
+                          src={parsed.embedUrl}
+                          className="w-full h-full border-0"
+                          title="Preview Vídeo"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
+                      ) : (
+                        <video
+                          src={parsed.embedUrl}
+                          controls
+                          muted
+                          className="w-full h-full object-contain"
+                        />
+                      )}
+                    </div>
                   </div>
-                  <div className="aspect-video w-full rounded-lg overflow-hidden bg-black border border-zinc-800">
-                    {heroVideoUrl.includes('youtube.com') || heroVideoUrl.includes('youtu.be') ? (
-                      <iframe
-                        src={heroVideoUrl}
-                        className="w-full h-full border-0"
-                        title="Preview YouTube"
-                      />
-                    ) : (
-                      <video
-                        src={heroVideoUrl}
-                        controls
-                        muted
-                        className="w-full h-full object-contain"
-                      />
-                    )}
-                  </div>
-                </div>
-              )}
+                );
+              })()}
             </div>
 
             {/* Quem Somos */}

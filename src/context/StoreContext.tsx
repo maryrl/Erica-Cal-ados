@@ -26,6 +26,7 @@ import {
 } from '../data/mockData';
 import { supabaseService } from '../lib/supabaseService';
 import { isSupabaseConfigured } from '../lib/supabase';
+import { saveMediaItem, getMediaItem } from '../lib/mediaStorage';
 
 interface ToastInfo {
   id: string;
@@ -158,20 +159,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [siteContent, setSiteContent] = useState<SiteContent>(() => {
     const saved = localStorage.getItem('aurelia_site_content');
     if (saved) {
-      const parsed = JSON.parse(saved);
-      if (
-        !parsed.aboutHistory ||
-        parsed.aboutHistory.includes('Jardins') ||
-        parsed.aboutHistory.includes('italiano') ||
-        parsed.aboutHistory.includes('autoestima') ||
-        !parsed.heroImage ||
-        parsed.heroImage.includes('unsplash') ||
-        !parsed.announcementBarText ||
-        parsed.announcementBarText.includes('299')
-      ) {
+      try {
+        const parsed = JSON.parse(saved);
+        return {
+          ...INITIAL_SITE_CONTENT,
+          ...parsed
+        };
+      } catch (err) {
         return INITIAL_SITE_CONTENT;
       }
-      return parsed;
     }
     return INITIAL_SITE_CONTENT;
   });
@@ -187,6 +183,26 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   });
 
   const [waTemplates, setWaTemplates] = useState<WhatsAppTemplate[]>(INITIAL_WA_TEMPLATES);
+
+  // Hydrate large media items from IndexedDB if stored
+  useEffect(() => {
+    async function hydrateLargeMedia() {
+      try {
+        const storedVideo = await getMediaItem('heroVideoUrl');
+        const storedImage = await getMediaItem('heroImage');
+        if (storedVideo || storedImage) {
+          setSiteContent((prev) => ({
+            ...prev,
+            ...(storedVideo ? { heroVideoUrl: storedVideo } : {}),
+            ...(storedImage ? { heroImage: storedImage } : {}),
+          }));
+        }
+      } catch (e) {
+        console.warn('Error hydrating media from IndexedDB:', e);
+      }
+    }
+    hydrateLargeMedia();
+  }, []);
 
   // Hydrate from Supabase on mount if configured
   useEffect(() => {
@@ -256,7 +272,25 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [storeConfig]);
 
   useEffect(() => {
-    localStorage.setItem('aurelia_site_content', JSON.stringify(siteContent));
+    // If video or image is a large string (like a base64 upload), save to IndexedDB asynchronously
+    if (siteContent.heroVideoUrl && siteContent.heroVideoUrl.length > 100000) {
+      saveMediaItem('heroVideoUrl', siteContent.heroVideoUrl);
+    }
+    if (siteContent.heroImage && siteContent.heroImage.length > 100000) {
+      saveMediaItem('heroImage', siteContent.heroImage);
+    }
+
+    try {
+      // Clean large payloads before storing in LocalStorage to prevent QuotaExceededError
+      const safeContent = {
+        ...siteContent,
+        heroVideoUrl: siteContent.heroVideoUrl && siteContent.heroVideoUrl.length > 100000 ? 'IDB_STORED_VIDEO' : siteContent.heroVideoUrl,
+        heroImage: siteContent.heroImage && siteContent.heroImage.length > 100000 ? 'IDB_STORED_IMAGE' : siteContent.heroImage,
+      };
+      localStorage.setItem('aurelia_site_content', JSON.stringify(safeContent));
+    } catch (e) {
+      console.warn('LocalStorage quota limit exceeded for siteContent:', e);
+    }
   }, [siteContent]);
 
   useEffect(() => {

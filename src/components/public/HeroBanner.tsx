@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useStore } from '../../context/StoreContext';
 import { Sparkles, ArrowRight, MessageCircle, Play, X, Film } from 'lucide-react';
+import { parseVideoSource } from '../../lib/mediaStorage';
 
 interface HeroBannerProps {
   onExploreClick?: () => void;
@@ -20,20 +21,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onExploreClick, onExplor
 
   const videoUrl = siteContent.heroVideoUrl;
   const mediaType = siteContent.heroMediaType || 'both';
-  const isVideoDirect = videoUrl && (videoUrl.endsWith('.mp4') || videoUrl.endsWith('.webm') || videoUrl.startsWith('data:video') || videoUrl.startsWith('blob:'));
-  const isYouTube = videoUrl && (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be'));
-
-  const getYouTubeEmbedUrl = (url: string) => {
-    let videoId = '';
-    if (url.includes('youtu.be/')) {
-      videoId = url.split('youtu.be/')[1]?.split('?')[0] || '';
-    } else if (url.includes('watch?v=')) {
-      videoId = url.split('watch?v=')[1]?.split('&')[0] || '';
-    } else if (url.includes('embed/')) {
-      videoId = url.split('embed/')[1]?.split('?')[0] || '';
-    }
-    return `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
-  };
+  const parsedVideo = parseVideoSource(videoUrl || '');
 
   return (
     <section className="relative overflow-hidden bg-[#FAF8F5] py-12 lg:py-20 border-b border-[#F0EAE1]">
@@ -80,20 +68,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onExploreClick, onExplor
                 <ArrowRight className="w-5 h-5" />
               </button>
 
-              {/* Video Button Next to CTA */}
-              {videoUrl && (
-                <button
-                  type="button"
-                  onClick={() => setShowVideoModal(true)}
-                  className="w-full sm:w-auto px-6 py-4 rounded-full bg-white border border-[#D8C28A] text-[#1A1A1A] hover:bg-[#FAF5EA] hover:border-[#C9A84C] font-semibold text-base transition flex items-center justify-center gap-2.5 shadow-xs cursor-pointer group"
-                >
-                  <div className="w-7 h-7 rounded-full bg-[#1A1A1A] group-hover:bg-[#C9A84C] flex items-center justify-center text-white transition">
-                    <Play className="w-3.5 h-3.5 fill-current ml-0.5 text-[#DFBA61] group-hover:text-white" />
-                  </div>
-                  <span>{siteContent.heroVideoTitle || 'Assistir Vídeo'}</span>
-                </button>
-              )}
-
+              {/* WhatsApp CTA */}
               <button
                 onClick={handleWhatsAppDirect}
                 className="w-full sm:w-auto px-6 py-4 rounded-full bg-white border border-[#D8C28A] text-[#1A1A1A] hover:text-[#C9A84C] hover:border-[#C9A84C] font-semibold text-base transition flex items-center justify-center gap-2.5 shadow-2xs cursor-pointer"
@@ -129,9 +104,9 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onExploreClick, onExplor
               <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white bg-white">
                 {mediaType === 'video' && videoUrl ? (
                   <div className="relative w-full h-[460px] lg:h-[520px] bg-black">
-                    {isYouTube ? (
+                    {parsedVideo.type === 'youtube' || parsedVideo.type === 'vimeo' ? (
                       <iframe
-                        src={getYouTubeEmbedUrl(videoUrl)}
+                        src={parsedVideo.embedUrl}
                         title="Vídeo de Apresentação"
                         className="w-full h-full border-0"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -139,7 +114,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onExploreClick, onExplor
                       />
                     ) : (
                       <video
-                        src={videoUrl}
+                        src={parsedVideo.embedUrl}
                         controls
                         autoPlay
                         loop
@@ -156,23 +131,6 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onExploreClick, onExplor
                       alt="Coleção Donna Érica Calçados"
                       className="w-full h-[460px] lg:h-[520px] object-cover object-center transform hover:scale-105 transition duration-700"
                     />
-
-                    {/* Floating Video Overlay Button if Video Exists */}
-                    {videoUrl && (
-                      <button
-                        type="button"
-                        onClick={() => setShowVideoModal(true)}
-                        className="absolute inset-0 bg-black/20 group-hover:bg-black/35 transition flex flex-col items-center justify-center gap-2 text-white p-4 cursor-pointer"
-                      >
-                        <div className="w-16 h-16 rounded-full bg-white/90 backdrop-blur-md text-[#1A1A1A] flex items-center justify-center shadow-2xl group-hover:scale-110 group-hover:bg-[#C9A84C] group-hover:text-white transition">
-                          <Play className="w-8 h-8 fill-current ml-1" />
-                        </div>
-                        <span className="bg-black/60 px-3.5 py-1.5 rounded-full text-xs font-bold tracking-wide backdrop-blur-sm flex items-center gap-1.5">
-                          <Film className="w-3.5 h-3.5 text-[#DFBA61]" />
-                          <span>{siteContent.heroVideoTitle || 'Assistir Vídeo da Coleção'}</span>
-                        </span>
-                      </button>
-                    )}
 
                     {/* Floating Product Badge overlay */}
                     <div className="absolute bottom-6 left-6 right-6 bg-white/95 backdrop-blur-md p-4 rounded-xl border border-[#E8DFC8] shadow-lg flex items-center justify-between pointer-events-none">
@@ -218,9 +176,9 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onExploreClick, onExplor
             </div>
 
             <div className="relative aspect-video rounded-2xl overflow-hidden bg-black shadow-inner">
-              {isYouTube ? (
+              {parsedVideo.type === 'youtube' || parsedVideo.type === 'vimeo' ? (
                 <iframe
-                  src={getYouTubeEmbedUrl(videoUrl)}
+                  src={parsedVideo.embedUrl}
                   title="Vídeo de Apresentação"
                   className="w-full h-full border-0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -228,7 +186,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onExploreClick, onExplor
                 />
               ) : (
                 <video
-                  src={videoUrl}
+                  src={parsedVideo.embedUrl}
                   controls
                   autoPlay
                   className="w-full h-full object-contain"
