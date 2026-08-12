@@ -1,0 +1,6 @@
+{
+  "name": "Donna Érica Calçados",
+  "description": "Vitrine digital e painel administrativo CRM para loja física de calçados femininos com pedidos integrados via WhatsApp.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
