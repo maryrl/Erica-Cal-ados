@@ -140,6 +140,9 @@ export interface SiteContent {
   heroSubtitle: string;
   heroButtonText: string;
   heroImage: string;
+  heroVideoUrl?: string;
+  heroMediaType?: 'image' | 'video' | 'both';
+  heroVideoTitle?: string;
   aboutHistory: string;
   aboutMission: string;
   aboutVision: string;

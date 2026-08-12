@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useStore } from '../../context/StoreContext';
+import logoImg from '../../assets/images/donna_erica_logo_1786503502716.jpg';
 import {
   Building2,
   Target,
@@ -241,14 +242,16 @@ export const InstitutionalPages: React.FC<InstitutionalPagesProps> = ({
               </div>
 
               <div className="lg:col-span-5 relative">
-                <div className="rounded-2xl overflow-hidden shadow-xl border-4 border-[#FAF8F5]">
-                  <img
-                    src="https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?q=80&w=800&auto=format&fit=crop"
-                    alt="Loja Física Donna Érica Calçados"
-                    className="w-full h-72 sm:h-80 object-cover"
-                  />
-                  <div className="bg-[#1A1A1A] text-white p-3 text-center text-xs font-semibold">
-                    📍 Nossa Loja Física no Crato-CE - Seminário (Próximo a Grendene)
+                <div className="rounded-2xl overflow-hidden shadow-xl border-4 border-[#FAF8F5] bg-white flex flex-col items-center">
+                  <div className="p-6 bg-white w-full flex items-center justify-center">
+                    <img
+                      src={logoImg}
+                      alt="Logo Oficial Donna Érica Calçados"
+                      className="w-full h-72 sm:h-80 object-contain hover:scale-105 transition duration-500"
+                    />
+                  </div>
+                  <div className="w-full bg-[#1A1A1A] text-white p-3 text-center text-xs font-semibold">
+                    📍 Donna Érica Calçados - Marca & Loja Física no Crato-CE
                   </div>
                 </div>
               </div>
