@@ -12,8 +12,8 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ isOpen, onClos
   const { loginAdmin, setCurrentView, storeConfig } = useStore();
 
   const [activeTab, setActiveTab] = useState<'login' | 'recovery'>('login');
-  const [email, setEmail] = useState('admin@donnaerica.com.br');
-  const [password, setPassword] = useState('admin123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [recoveryEmail, setRecoveryEmail] = useState('');
   const [recoverySent, setRecoverySent] = useState(false);
 
@@ -123,14 +123,6 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ isOpen, onClos
               <ShieldCheck className="w-4 h-4" />
               <span>Entrar no Painel CRM</span>
             </button>
-
-            {/* Quick Demo Helper */}
-            <div className="pt-3 border-t border-[#332F28] text-center text-[11px] text-zinc-400">
-              <p>💡 Demo Acesso Rápido:</p>
-              <code className="bg-[#2B2823] px-2 py-0.5 rounded text-[#DFBA61] text-[10px] inline-block mt-1">
-                admin@donnaerica.com.br / admin123
-              </code>
-            </div>
           </form>
         ) : (
           <form onSubmit={handleRecoverySubmit} className="space-y-4">
